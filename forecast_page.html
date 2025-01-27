@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pollution Forecast</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f9;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select, button {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0 15px 0;
+            display: inline-block;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #5cb85c;
+            color: white;
+            font-size: 16px;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #4cae4c;
+        }
+        .results {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .graph-container {
+            margin-top: 30px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Pollution Forecast</h1>
+        <form id="forecastForm">
+            <div class="form-group">
+                <label for="city">City:</label>
+                <input type="text" id="city" name="city" placeholder="Enter city name" required>
+            </div>
+            <div class="form-group">
+                <label for="days">Select number of days to forecast:</label>
+                <select id="days" name="days">
+                    <option value="1">1 Day</option>
+                    <option value="3">3 Days</option>
+                    <option value="5">5 Days</option>
+                    <option value="7">7 Days</option>
+                </select>
+            </div>
+            <button type="button" id="submitButton">Get Forecast</button>
+        </form>
+
+        <div id="results" class="results"></div>
+        <div class="graph-container" id="graphContainer">
+            <canvas id="forecastGraph" width="400" height="200"></canvas>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.getElementById('submitButton').addEventListener('click', function () {
+            const city = document.getElementById('city').value.trim();
+            const days = document.getElementById('days').value;
+
+            if (!city) {
+                alert('Please enter a city name.');
+                return;
+            }
+
+            // Simulate fetching data (replace this with actual API call to your backend)
+            fetch('/predict', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ city, days })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const results = document.getElementById('results');
+                results.innerHTML = `<h2>Forecast for ${city}</h2>`;
+                data.forecast.forEach((day, index) => {
+                    results.innerHTML += `<p>Day ${index + 1}: SO2: ${day.SO2}, NO2: ${day.NO2}, PM10: ${day.PM10}, PM2.5: ${day.PM25}</p>`;
+                });
+
+                // Plotting graph
+                const ctx = document.getElementById('forecastGraph').getContext('2d');
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: data.forecast.map((_, i) => `Day ${i + 1}`),
+                        datasets: [
+                            { label: 'SO2', data: data.forecast.map(d => d.SO2), borderColor: 'red', fill: false },
+                            { label: 'NO2', data: data.forecast.map(d => d.NO2), borderColor: 'blue', fill: false },
+                            { label: 'PM10', data: data.forecast.map(d => d.PM10), borderColor: 'green', fill: false },
+                            { label: 'PM2.5', data: data.forecast.map(d => d.PM25), borderColor: 'purple', fill: false },
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: { position: 'top' },
+                        },
+                        scales: {
+                            x: { title: { display: true, text: 'Days' } },
+                            y: { title: { display: true, text: 'Pollutant Levels' } }
+                        }
+                    }
+                });
+            })
+            .catch(error => {
+                console.error('Error fetching forecast:', error);
+                alert('An error occurred while fetching the forecast. Please try again.');
+            });
+        });
+    </script>
+</body>
+</html>
