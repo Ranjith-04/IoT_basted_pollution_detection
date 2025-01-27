@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Air Quality and Location</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-blue-50 text-gray-800 flex items-center justify-center min-h-screen">
+    <div class="bg-white rounded-lg shadow-lg p-8 max-w-lg text-center">
+        <h1 class="text-3xl font-bold mb-4">Current Location & Air Quality</h1>
+        <div class="text-lg mb-6">
+            <i class="fas fa-map-marker-alt text-red-500"></i>
+            <span id="location" class="font-semibold">Fetching location...</span>
+        </div>
+        <div class="text-2xl font-bold text-yellow-500 mb-2" id="airQuality">Air Quality: Good</div>
+        <p class="text-gray-600 mb-6">Overall Air Quality Index</p>
+        <button onclick="window.location.href='{{ url_for('index') }}'" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 focus:outline-none">
+            Go to Sensor Dashboard
+        </button>
+    </div>
+
+    <script>
+        // Function to fetch and display the user's current location
+        function fetchLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(showPosition, showError);
+            } else {
+                document.getElementById("location").innerText = "Geolocation is not supported by this browser.";
+            }
+        }
+
+        function showPosition(position) {
+            const lat = position.coords.latitude.toFixed(2);
+            const lon = position.coords.longitude.toFixed(2);
+            document.getElementById("location").innerText = `Latitude: ${lat}, Longitude: ${lon}`;
+        }
+
+        function showError(error) {
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    document.getElementById("location").innerText = "User denied the request for Geolocation.";
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    document.getElementById("location").innerText = "Location information is unavailable.";
+                    break;
+                case error.TIMEOUT:
+                    document.getElementById("location").innerText = "The request to get user location timed out.";
+                    break;
+                case error.UNKNOWN_ERROR:
+                    document.getElementById("location").innerText = "An unknown error occurred.";
+                    break;
+            }
+        }
+
+        // Fetch location on page load
+        fetchLocation();
+    </script>
+</body>
+</html>

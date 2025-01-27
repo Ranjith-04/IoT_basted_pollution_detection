@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live MQTT Sensor Data with WebSockets</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', (event) => {
+            // Establish WebSocket connection to the Flask server
+            const socket = io();
+
+            // Initialize empty data arrays for charts
+            let methaneData = [];
+            let so2Data = [];
+            let airQualityData = [];
+            let labels = [];  // Timestamps or indices
+
+            // Create charts for each sensor
+            const methaneChart = new Chart(document.getElementById('methaneChart'), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Methane (ppm)',
+                        data: methaneData,
+                        borderColor: 'blue',
+                        fill: false,
+                    }]
+                },
+                options: {
+                    scales: {
+                        x: { display: true },
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+
+            const so2Chart = new Chart(document.getElementById('so2Chart'), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Sulphur Dioxide (ppb)',
+                        data: so2Data,
+                        borderColor: 'green',
+                        fill: false,
+                    }]
+                },
+                options: {
+                    scales: {
+                        x: { display: true },
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+
+            const airQualityChart = new Chart(document.getElementById('airQualityChart'), {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Air Quality (AQI)',
+                        data: airQualityData,
+                        borderColor: 'orange',
+                        fill: false,
+                    }]
+                },
+                options: {
+                    scales: {
+                        x: { display: true },
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+
+            // Receive updated sensor data from the server
+            socket.on('update_sensor_data', function(data) {
+                // Update the corresponding HTML elements with real-time sensor data
+                document.getElementById('mq1').innerText = data.mq1;
+                document.getElementById('mq7').innerText = data.mq7;
+                document.getElementById('mq135').innerText = data.mq135;
+
+                // Extract numeric values from the sensor data
+                const methaneValue = parseFloat(data.mq1.split(': ')[1]);
+                const so2Value = parseFloat(data.mq7.split(': ')[1]);
+                const airQualityValue = parseFloat(data.mq135.split(': ')[1]);
+
+                // Update chart data and labels
+                labels.push(new Date().toLocaleTimeString());
+                methaneData.push(methaneValue);
+                so2Data.push(so2Value);
+                airQualityData.push(airQualityValue);
+
+                // Keep the last 10 data points for a cleaner view
+                if (labels.length > 10) {
+                    labels.shift();
+                    methaneData.shift();
+                    so2Data.shift();
+                    airQualityData.shift();
+                }
+
+                // Update the charts
+                methaneChart.update();
+                so2Chart.update();
+                airQualityChart.update();
+            });
+        });
+    </script>
+</head>
+<body class="bg-gray-100 text-gray-800">
+    <div class="container mx-auto p-6">
+        <h1 class="text-3xl font-bold mb-6 text-center">Live MQTT Sensor Data with WebSockets</h1>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Methane Sensor -->
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <h2 class="text-xl font-semibold mb-4">Methane Sensor</h2>
+                <p id="mq1" class="text-4xl font-bold text-blue-500">Waiting for data...</p>
+                <canvas id="methaneChart" width="400" height="200"></canvas>
+            </div>
+
+            <!-- Sulphur Dioxide Sensor -->
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <h2 class="text-xl font-semibold mb-4">Sulphur Dioxide Sensor</h2>
+                <p id="mq7" class="text-4xl font-bold text-green-500">Waiting for data...</p>
+                <canvas id="so2Chart" width="400" height="200"></canvas>
+            </div>
+
+            <!-- Air Quality Sensor -->
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <h2 class="text-xl font-semibold mb-4">Air Quality Sensor</h2>
+                <p id="mq135" class="text-4xl font-bold text-yellow-500">Waiting for data...</p>
+                <canvas id="airQualityChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
